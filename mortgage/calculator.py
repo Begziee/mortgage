@@ -1,4 +1,6 @@
 import pandas as pd
+from functools import lru_cache
+from .utils import output_csv
 
 class MortgageCalculator:
     def __init__(
@@ -134,7 +136,9 @@ class MortgageCalculator:
             )
             month = month + 1
         return fixed_payment_schedule
-  
+
+
+    @output_csv
     def amortisation_schedule(self):
 
         if self.variable_rate == 0:
