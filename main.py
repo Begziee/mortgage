@@ -40,7 +40,7 @@ if __name__ == "__main__":
     overpayment_df = mortgage.overpayment_schedule(overpayment_amount=500)
     print(overpayment_df)
 
-    mortgage = OverpaymentCalculator(loan_amount=331794, fixed_rate=4.55, tenure=30)
     print(f'{"="*20} Fixed Mortgage Overpayment Calculator {"="*20}')
+    mortgage = OverpaymentCalculator(loan_amount=331794, fixed_rate=4.55, tenure=30)
     overpayment_df = mortgage.overpayment_schedule(overpayment_amount=500)
     print(overpayment_df)

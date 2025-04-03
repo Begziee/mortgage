@@ -3,6 +3,7 @@ from functools import lru_cache
 from typing import Union, List, Dict
 from decimal import Decimal
 from .utils import output_csv
+from .helpers import _mortgage_summary, _clean_and_convert_column
 
 
 class MortgageCalculator:
@@ -15,6 +16,7 @@ class MortgageCalculator:
         self.fixed_tenure = fixed_tenure
         self.tenure = tenure
         self.total_month = self.tenure * 12
+
 
     def _fixed_rate_payment(self) -> list[dict[str, Union[float, Decimal]]]:
         """
@@ -172,6 +174,7 @@ class MortgageCalculator:
                 payment = variable_payment
                 rate_type = "Variable"
                 rate = self.variable_rate
+
             # Calculate interest, principal, and remaining balance
             interest_payment = loan_balance * monthly_rate
             principal_payment = payment - interest_payment
@@ -232,11 +235,10 @@ class MortgageCalculator:
             amortisation_schedule = self._variable_payment_calculation()
 
         amortisation_df = pd.DataFrame(amortisation_schedule)
-        amortisation_df["Paid to date"] = (
-            amortisation_df["Paid to date"].str.replace(",", "").astype(float)
-        )
-        print("____________________________________")
-        print(
-            f'This means you will pay back £{round(amortisation_df["Paid to date"].iloc[-1]/self.loan_amount,2)} for every £1 borrowed.'
-        )
+
+        amortisation_df["Paid to date"] = _clean_and_convert_column(amortisation_df, "Paid to date")
+        print(f'{"="*30}')
+        summary = _mortgage_summary(self, amortisation_df)
+        print("\n".join(summary))   
+
         return amortisation_df
