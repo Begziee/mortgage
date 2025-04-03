@@ -3,6 +3,7 @@ from functools import lru_cache
 from typing import Union, List, Dict
 from decimal import Decimal
 from .utils import output_csv
+from .helpers import _mortgage_summary, _clean_and_convert_column
 from .calculator import MortgageCalculator
 
 
@@ -208,6 +209,7 @@ class OverpaymentCalculator(MortgageCalculator):
                 - 'Loan balance' (float): Remaining loan balance
                 - 'Equity' (float): Equity percentage
         """
+        self.overpayment_amount = overpayment_amount
         if self.variable_rate == 0:
             overpayment_schedule = self._fixed_overpayment_calculation(
                 overpayment_amount
@@ -218,8 +220,11 @@ class OverpaymentCalculator(MortgageCalculator):
             )
 
         overpayment_df = pd.DataFrame(overpayment_schedule)
-
+        overpayment_df["Paid to date"] = _clean_and_convert_column(overpayment_df, "Paid to date")
         if not compare:
+            print(f'{"="*30}')
+            summary = _mortgage_summary(self, overpayment_df)
+            print("\n".join(summary))  
             return overpayment_df
         else:
             amortization_df = self.amortisation_schedule()
@@ -228,6 +233,16 @@ class OverpaymentCalculator(MortgageCalculator):
                 overpayment_df,
                 on="Month",
                 how="left",
-                suffixes=("_standard", "_overpayment"),
+                suffixes=(" standard", " overpayment"),
             )
+            overpayment_df["Paid to date overpayment"] = _clean_and_convert_column(overpayment_df, "Paid to date overpayment")
+            overpayment_df["Interest charged to date standard"] = _clean_and_convert_column(overpayment_df, "Interest charged to date standard")
+            overpayment_df["Interest charged to date overpayment"] = _clean_and_convert_column(overpayment_df, "Interest charged to date overpayment")
+
+            print(f'{"="*30}')
+            summary = _mortgage_summary(self, overpayment_df, compare=True)
+            print("\n".join(summary))  
             return overpayment_df
+
+
+
