@@ -1,13 +1,24 @@
-import pandas as pd
+"""
+This module contains the OverpaymentCalculator class, which extends the MortgageCalculator
+to calculate overpayment schedules for fixed and variable rate mortgages.
+"""
+
 from functools import lru_cache
 from typing import Union, List, Dict
 from decimal import Decimal
+
+import pandas as pd
+
 from .utils import output_csv
 from .helpers import _mortgage_summary, _clean_and_convert_column
 from .calculator import MortgageCalculator
 
 
 class OverpaymentCalculator(MortgageCalculator):
+    """
+    A class to calculate overpayment schedules for fixed and variable rate mortgages.
+    Inherits from MortgageCalculator.
+    """
     def _fixed_overpayment_calculation(
         self, overpayment_amount
     ) -> list[dict[str, Union[float, Decimal]]]:
@@ -220,29 +231,38 @@ class OverpaymentCalculator(MortgageCalculator):
             )
 
         overpayment_df = pd.DataFrame(overpayment_schedule)
-        overpayment_df["Paid to date"] = _clean_and_convert_column(overpayment_df, "Paid to date")
+        overpayment_df["Paid to date"] = _clean_and_convert_column(
+            overpayment_df, "Paid to date"
+        )
         if not compare:
             print(f'{"="*30}')
             summary = _mortgage_summary(self, overpayment_df)
-            print("\n".join(summary))  
+            print("\n".join(summary))
             return overpayment_df
-        else:
-            amortization_df = self.amortisation_schedule()
-            overpayment_df = pd.merge(
+        
+        amortization_df = self.amortisation_schedule()
+        overpayment_df = pd.merge(
                 amortization_df,
                 overpayment_df,
                 on="Month",
                 how="left",
                 suffixes=(" standard", " overpayment"),
             )
-            overpayment_df["Paid to date overpayment"] = _clean_and_convert_column(overpayment_df, "Paid to date overpayment")
-            overpayment_df["Interest charged to date standard"] = _clean_and_convert_column(overpayment_df, "Interest charged to date standard")
-            overpayment_df["Interest charged to date overpayment"] = _clean_and_convert_column(overpayment_df, "Interest charged to date overpayment")
+        overpayment_df["Paid to date overpayment"] = _clean_and_convert_column(
+                overpayment_df, "Paid to date overpayment"
+            )
+        overpayment_df["Interest charged to date standard"] = (
+                _clean_and_convert_column(
+                    overpayment_df, "Interest charged to date standard"
+                )
+            )
+        overpayment_df["Interest charged to date overpayment"] = (
+                _clean_and_convert_column(
+                    overpayment_df, "Interest charged to date overpayment"
+                )
+            )
 
-            print(f'{"="*30}')
-            summary = _mortgage_summary(self, overpayment_df, compare=True)
-            print("\n".join(summary))  
-            return overpayment_df
-
-
-
+        print(f'{"="*30}')
+        summary = _mortgage_summary(self, overpayment_df, compare=True)
+        print("\n".join(summary))
+        return overpayment_df

@@ -3,6 +3,7 @@ from functools import wraps
 from datetime import datetime
 import pandas as pd
 
+
 def output_csv(func):
     """
     Decorator to save the output of a function to a CSV file.
@@ -26,14 +27,23 @@ def output_csv(func):
         df.to_csv(filepath, index=False)
         print(f"Saved CSV to: {filepath}")
         return df
+
     return wrapper
+
 
 def loan_summary_decorator(summary_func):
     """
     Decorator to enhance the loan summary with additional details.
     Includes overpayment details if applicable and comparison calculations if `compare` is True.
     """
-    def wrapper(self, df: pd.DataFrame, loan_amount: float, overpayment_amount: float = 0, compare: bool = False):
+
+    def wrapper(
+        self,
+        df: pd.DataFrame,
+        loan_amount: float,
+        overpayment_amount: float = 0,
+        compare: bool = False,
+    ):
         # Generate the base summary
         base_summary = summary_func(self, df, loan_amount, overpayment_amount)
 
@@ -44,13 +54,15 @@ def loan_summary_decorator(summary_func):
 
         # Add comparison details if `compare` is True
         if compare:
-            total_paid_ratio_overpayment = round(df["Paid to date overpayment"].dropna().iloc[-1] / loan_amount, 2)
+            total_paid_ratio_overpayment = round(
+                df["Paid to date overpayment"].dropna().iloc[-1] / loan_amount, 2
+            )
             total_years = df["Payment overpayment"].count() // 12
             total_months = df["Payment overpayment"].count() % 12
             interest_savings = round(
-                df["Interest charged to date standard"].iloc[-1] -
-                df["Interest charged to date overpayment"].dropna().iloc[-1],
-                2
+                df["Interest charged to date standard"].iloc[-1]
+                - df["Interest charged to date overpayment"].dropna().iloc[-1],
+                2,
             )
             base_summary.append(
                 f"💸 Comparison Summary:"
@@ -64,4 +76,3 @@ def loan_summary_decorator(summary_func):
         return base_summary
 
     return wrapper
-

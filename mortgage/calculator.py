@@ -1,22 +1,26 @@
-import pandas as pd
 from functools import lru_cache
-from typing import Union, List, Dict
+from typing import Union
 from decimal import Decimal
-from .utils import output_csv
-from .helpers import _mortgage_summary, _clean_and_convert_column
-
+import pandas as pd
+from mortgage.utils import output_csv
+from mortgage.helpers import _mortgage_summary, _clean_and_convert_column
 
 class MortgageCalculator:
-    def __init__(
-        self, loan_amount, fixed_rate, tenure, variable_rate=0, fixed_tenure=0
-    ):
+    """
+    A class to calculate mortgage schedules for fixed and variable rate loans.
+    """
+    def __init__(self,
+                 loan_amount,
+                 fixed_rate,
+                 tenure,
+                 variable_rate=0,
+                 fixed_tenure=0):
         self.loan_amount = loan_amount
         self.fixed_rate = fixed_rate
         self.variable_rate = variable_rate
         self.fixed_tenure = fixed_tenure
         self.tenure = tenure
         self.total_month = self.tenure * 12
-
 
     def _fixed_rate_payment(self) -> list[dict[str, Union[float, Decimal]]]:
         """
@@ -34,21 +38,20 @@ class MortgageCalculator:
         """
         fixed_rate_payment = []
         monthly_rate = self.fixed_rate / (12 * 100)
-        compounding_factor = (1 + monthly_rate) ** self.total_month
-        payment = (
-            self.loan_amount
-            * monthly_rate
-            * compounding_factor
-            / (compounding_factor - 1)
-        )
+        compounding_factor = (1 + monthly_rate)**self.total_month
+        payment = (self.loan_amount * monthly_rate * compounding_factor /
+                   (compounding_factor - 1))
 
-        fixed_rate_payment.append({"monthly_rate": monthly_rate, "payment": payment})
+        fixed_rate_payment.append({
+            "monthly_rate": monthly_rate,
+            "payment": payment
+        })
         return fixed_rate_payment
 
     @lru_cache()
     def _variable_rate_payment(
-        self, current_balance: float
-    ) -> list[dict[str, Union[float, Decimal]]]:
+            self,
+            current_balance: float) -> list[dict[str, Union[float, Decimal]]]:
         """
         Calculate the variable monthly rate and payment amount for the loan amount
         based on the variable interest rate and tenure.
@@ -66,19 +69,19 @@ class MortgageCalculator:
         variable_rate_payment = []
         monthly_rate = self.variable_rate / (12 * 100)
         total_month = (self.tenure - self.fixed_tenure) * 12
-        compounding_factor = (1 + monthly_rate) ** total_month
-        payment = (
-            current_balance
-            * monthly_rate
-            * compounding_factor
-            / (compounding_factor - 1)
-        )
+        compounding_factor = (1 + monthly_rate)**total_month
+        payment = (current_balance * monthly_rate * compounding_factor /
+                   (compounding_factor - 1))
 
-        variable_rate_payment.append({"monthly_rate": monthly_rate, "payment": payment})
+        variable_rate_payment.append({
+            "monthly_rate": monthly_rate,
+            "payment": payment
+        })
         return variable_rate_payment
 
     @lru_cache()
-    def _fixed_payment_calculation(self) -> list[dict[str, Union[float, Decimal]]]:
+    def _fixed_payment_calculation(
+            self) -> list[dict[str, Union[float, Decimal]]]:
         """
         Calculate the fixed payment schedule for the loan amount
         based on the fixed interest rate and tenure.
@@ -114,25 +117,24 @@ class MortgageCalculator:
             equity = total_principal_payment / self.loan_amount
 
             # Append to schedule
-            payment_schedule.append(
-                {
-                    "Month": month,
-                    "Rate": self.fixed_rate,
-                    "Rate type": "Fixed",
-                    "Payment": f"{payment:,.2f}",
-                    "Interest charged": f"{interest_payment:,.2f}",
-                    "Principal repaid ": f"{principal_payment:,.2f}",
-                    "Paid to date": f"{total_payment:,.2f}",
-                    "Interest charged to date": f"{total_interest_payment:,.2f}",
-                    "Principal repaid to date": f"{total_principal_payment:,.2f}",
-                    "Loan balance": f"{max(loan_balance, 0):,.2f}",
-                    "Equity": f"{equity:.2%}",
-                }
-            )
+            payment_schedule.append({
+                "Month": month,
+                "Rate": self.fixed_rate,
+                "Rate type": "Fixed",
+                "Payment": f"{payment:,.2f}",
+                "Interest charged": f"{interest_payment:,.2f}",
+                "Principal repaid ": f"{principal_payment:,.2f}",
+                "Paid to date": f"{total_payment:,.2f}",
+                "Interest charged to date": f"{total_interest_payment:,.2f}",
+                "Principal repaid to date": f"{total_principal_payment:,.2f}",
+                "Loan balance": f"{max(loan_balance, 0):,.2f}",
+                "Equity": f"{equity:.2%}",
+            })
         return payment_schedule
 
     @lru_cache()
-    def _variable_payment_calculation(self) -> list[dict[str, Union[float, Decimal]]]:
+    def _variable_payment_calculation(
+            self) -> list[dict[str, Union[float, Decimal]]]:
         """
         Calculate the variable payment schedule for the loan amount
         based on the fixed and variable interest rate, and tenure.
@@ -167,7 +169,8 @@ class MortgageCalculator:
                 rate = self.fixed_rate
             else:
                 if variable_monthly_rate is None or variable_payment is None:
-                    variable_rate_info = self._variable_rate_payment(loan_balance)[0]
+                    variable_rate_info = self._variable_rate_payment(
+                        loan_balance)[0]
                     variable_monthly_rate = variable_rate_info["monthly_rate"]
                     variable_payment = variable_rate_info["payment"]
                 monthly_rate = variable_monthly_rate
@@ -187,21 +190,19 @@ class MortgageCalculator:
             equity = total_principal_payment / self.loan_amount
 
             # Append to schedule
-            payment_schedule.append(
-                {
-                    "Month": month,
-                    "Rate": rate,
-                    "Rate type": rate_type,
-                    "Payment": f"{payment:,.2f}",
-                    "Interest charged": f"{interest_payment:,.2f}",
-                    "Principal repaid ": f"{principal_payment:,.2f}",
-                    "Paid to date": f"{total_payment:,.2f}",
-                    "Interest charged to date": f"{total_interest_payment:,.2f}",
-                    "Principal repaid to date": f"{total_principal_payment:,.2f}",
-                    "Loan balance": f"{max(loan_balance, 0):,.2f}",
-                    "Equity": f"{equity:.2%}",
-                }
-            )
+            payment_schedule.append({
+                "Month": month,
+                "Rate": rate,
+                "Rate type": rate_type,
+                "Payment": f"{payment:,.2f}",
+                "Interest charged": f"{interest_payment:,.2f}",
+                "Principal repaid ": f"{principal_payment:,.2f}",
+                "Paid to date": f"{total_payment:,.2f}",
+                "Interest charged to date": f"{total_interest_payment:,.2f}",
+                "Principal repaid to date": f"{total_principal_payment:,.2f}",
+                "Loan balance": f"{max(loan_balance, 0):,.2f}",
+                "Equity": f"{equity:.2%}",
+            })
             month = month + 1
         return payment_schedule
 
@@ -236,9 +237,10 @@ class MortgageCalculator:
 
         amortisation_df = pd.DataFrame(amortisation_schedule)
 
-        amortisation_df["Paid to date"] = _clean_and_convert_column(amortisation_df, "Paid to date")
+        amortisation_df["Paid to date"] = _clean_and_convert_column(
+            amortisation_df, "Paid to date")
         print(f'{"="*30}')
         summary = _mortgage_summary(self, amortisation_df)
-        print("\n".join(summary))   
+        print("\n".join(summary))
 
         return amortisation_df

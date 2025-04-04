@@ -3,3 +3,4 @@ __pycache__/
 *.py[cod]
 .DS_Store
 output_files/
+test_script/
