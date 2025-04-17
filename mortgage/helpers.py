@@ -4,6 +4,68 @@ data cleaning and generating loan summaries ***********.
 """
 
 import pandas as pd
+from typing import Union
+from decimal import Decimal
+from functools import lru_cache
+
+
+@lru_cache()
+def _fixed_rate_payment(self) -> list[dict[str, Union[float, Decimal]]]:
+    """
+    Calculate the fixed monthly rate and payment amount for the loan amount
+    based on the fixed interest rate and tenure
+
+    Uses instance attributes:
+        - fixed_rate (float): Fixed interest rate (float)
+        - total_month (int): Loan tenure in months (int)
+        - loan_amount (float): Amount borrowed (float)
+
+    Returns:
+        - fixed_rate_payment (list): List of dictionaries containing
+        monthly rate and payment amount for the fixed rate
+    """
+    fixed_rate_payment = []
+    monthly_rate = self.fixed_rate / (12 * 100)
+    compounding_factor = (1 + monthly_rate)**self.total_month
+    payment = (self.loan_amount * monthly_rate * compounding_factor /
+            (compounding_factor - 1))
+
+    fixed_rate_payment.append({
+        "monthly_rate": monthly_rate,
+        "payment": payment
+    })
+    return fixed_rate_payment
+
+@lru_cache()
+def _variable_rate_payment(
+        self,
+        current_balance: float) -> list[dict[str, Union[float, Decimal]]]:
+    """
+    Calculate the variable monthly rate and payment amount for the loan amount
+    based on the variable interest rate and tenure.
+
+    Args:
+        current_balance (float): Remaining loan principal (float)
+    Uses instance attributes:
+        - variable_rate (float): Variable interest rate (float)
+        - tenure (int): Loan tenure in years (int)
+        - fixed_tenure (int): Fixed tenure in years (int)
+    Returns:
+        - variable_rate_payment (list): List of dictionaries containing
+        monthly rate and payment amount for the variable rate
+    """
+    variable_rate_payment = []
+    monthly_rate = self.variable_rate / (12 * 100)
+    total_month = (self.tenure - self.fixed_tenure) * 12
+    compounding_factor = (1 + monthly_rate)**total_month
+    payment = (current_balance * monthly_rate * compounding_factor /
+            (compounding_factor - 1))
+
+    variable_rate_payment.append({
+        "monthly_rate": monthly_rate,
+        "payment": payment
+    })
+    return variable_rate_payment
 
 def _clean_and_convert_column(data_frame: pd.DataFrame, column_name: str) -> pd.Series:
     """
@@ -93,3 +155,6 @@ def _mortgage_summary(self, data_frame: pd.DataFrame, compare: bool = False) -> 
         paid_ratio = round(data_frame["Paid to date"].dropna().iloc[-1] / self.loan_amount, 2)
         output.append(f"• Repayment Ratio: £{paid_ratio} for every £1 borrowed")
     return output
+
+
+
