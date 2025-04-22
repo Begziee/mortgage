@@ -1,21 +1,34 @@
+"""
+    Core program used to simulate the mortgage schedules. 
+    Comprises of two classes MortgageCalculator and OverpaymentCalculator
+"""
+
 from functools import lru_cache
 from typing import Union
-from typing import Union, List, Dict
 from decimal import Decimal
 import pandas as pd
 from mortgage.utils import output_csv
-from mortgage.helpers import  _mortgage_summary, _clean_and_convert_column, _variable_rate_payment, _fixed_rate_payment
+from mortgage.helpers import (
+    _mortgage_summary,
+    _clean_and_convert_column,
+    _variable_rate_payment,
+    _fixed_rate_payment,
+)
+
 
 class MortgageCalculator:
     """
     A class to calculate mortgage schedules for fixed and variable rate loans.
+
+    This class provides functionality to compute monthly mortgage payments,
+    total interest paid, and remaining balances for both fixed and variable
+    rate loans. It takes into account the loan amount, interest rates, and
+    tenure to help users understand their mortgage obligations.
     """
-    def __init__(self,
-                 loan_amount,
-                 fixed_rate,
-                 tenure,
-                 variable_rate=0,
-                 fixed_tenure=0):
+
+    def __init__(
+        self, loan_amount, fixed_rate, tenure, variable_rate=0, fixed_tenure=0
+    ):
         self.loan_amount = loan_amount
         self.fixed_rate = fixed_rate
         self.variable_rate = variable_rate
@@ -24,8 +37,7 @@ class MortgageCalculator:
         self.total_month = self.tenure * 12
 
     @lru_cache()
-    def _fixed_payment_calculation(
-            self) -> list[dict[str, Union[float, Decimal]]]:
+    def _fixed_payment_calculation(self) -> list[dict[str, Union[float, Decimal]]]:
         """
         Calculate the fixed payment schedule for the loan amount
         based on the fixed interest rate and tenure.
@@ -62,24 +74,25 @@ class MortgageCalculator:
             equity = total_principal_payment / self.loan_amount
 
             # Append to schedule
-            payment_schedule.append({
-                "Month": month,
-                "Rate": self.fixed_rate,
-                "Rate type": "Fixed",
-                "Payment": f"{payment:,.2f}",
-                "Interest charged": f"{interest_payment:,.2f}",
-                "Principal repaid ": f"{principal_payment:,.2f}",
-                "Paid to date": f"{total_payment:,.2f}",
-                "Interest charged to date": f"{total_interest_payment:,.2f}",
-                "Principal repaid to date": f"{total_principal_payment:,.2f}",
-                "Loan balance": f"{max(loan_balance, 0):,.2f}",
-                "Equity": f"{equity:.2%}",
-            })
+            payment_schedule.append(
+                {
+                    "Month": month,
+                    "Rate": self.fixed_rate,
+                    "Rate type": "Fixed",
+                    "Payment": f"{payment:,.2f}",
+                    "Interest charged": f"{interest_payment:,.2f}",
+                    "Principal repaid ": f"{principal_payment:,.2f}",
+                    "Paid to date": f"{total_payment:,.2f}",
+                    "Interest charged to date": f"{total_interest_payment:,.2f}",
+                    "Principal repaid to date": f"{total_principal_payment:,.2f}",
+                    "Loan balance": f"{max(loan_balance, 0):,.2f}",
+                    "Equity": f"{equity:.2%}",
+                }
+            )
         return payment_schedule
 
     @lru_cache()
-    def _variable_payment_calculation(
-            self) -> list[dict[str, Union[float, Decimal]]]:
+    def _variable_payment_calculation(self) -> list[dict[str, Union[float, Decimal]]]:
         """
         Calculate the variable payment schedule for the loan amount
         based on the fixed and variable interest rate, and tenure.
@@ -117,8 +130,7 @@ class MortgageCalculator:
                 rate = self.fixed_rate
             else:
                 if variable_monthly_rate is None or variable_payment is None:
-                    variable_rate_info = _variable_rate_payment(self,
-                        loan_balance)[0]
+                    variable_rate_info = _variable_rate_payment(self, loan_balance)[0]
                     variable_monthly_rate = variable_rate_info["monthly_rate"]
                     variable_payment = variable_rate_info["payment"]
                 monthly_rate = variable_monthly_rate
@@ -138,19 +150,21 @@ class MortgageCalculator:
             equity = total_principal_payment / self.loan_amount
 
             # Append to schedule
-            payment_schedule.append({
-                "Month": month,
-                "Rate": rate,
-                "Rate type": rate_type,
-                "Payment": f"{payment:,.2f}",
-                "Interest charged": f"{interest_payment:,.2f}",
-                "Principal repaid ": f"{principal_payment:,.2f}",
-                "Paid to date": f"{total_payment:,.2f}",
-                "Interest charged to date": f"{total_interest_payment:,.2f}",
-                "Principal repaid to date": f"{total_principal_payment:,.2f}",
-                "Loan balance": f"{max(loan_balance, 0):,.2f}",
-                "Equity": f"{equity:.2%}",
-            })
+            payment_schedule.append(
+                {
+                    "Month": month,
+                    "Rate": rate,
+                    "Rate type": rate_type,
+                    "Payment": f"{payment:,.2f}",
+                    "Interest charged": f"{interest_payment:,.2f}",
+                    "Principal repaid ": f"{principal_payment:,.2f}",
+                    "Paid to date": f"{total_payment:,.2f}",
+                    "Interest charged to date": f"{total_interest_payment:,.2f}",
+                    "Principal repaid to date": f"{total_principal_payment:,.2f}",
+                    "Loan balance": f"{max(loan_balance, 0):,.2f}",
+                    "Equity": f"{equity:.2%}",
+                }
+            )
             month = month + 1
         return payment_schedule
 
@@ -159,10 +173,10 @@ class MortgageCalculator:
         """
         Calculate the amortisation schedule for the loan amount
         based on the fixed and variable interest rate, and tenure.
-        
+
         Uses instance attributes:
             - variable_rate (float): Variable interest rate (float)
-  
+
         Returns:
             amortisation_df: DataFrame containing the amortisation schedule
                 - 'Month' (int): Month number
@@ -186,7 +200,8 @@ class MortgageCalculator:
         amortisation_df = pd.DataFrame(amortisation_schedule)
 
         amortisation_df["Paid to date"] = _clean_and_convert_column(
-            amortisation_df, "Paid to date")
+            amortisation_df, "Paid to date"
+        )
         print(f'{"="*30}')
         summary = _mortgage_summary(self, amortisation_df)
         print("\n".join(summary))
@@ -200,11 +215,19 @@ class OverpaymentCalculator(MortgageCalculator):
     Inherits from MortgageCalculator.
     """
 
-    def __init__(self, loan_amount, fixed_rate, tenure, variable_rate=0, fixed_tenure=0, overpayment_amount=0, compare=False):
+    def __init__(
+        self,
+        loan_amount,
+        fixed_rate,
+        tenure,
+        variable_rate=0,
+        fixed_tenure=0,
+        overpayment_amount=0,
+        compare=False,
+    ):
         super().__init__(loan_amount, fixed_rate, tenure, variable_rate, fixed_tenure)
         self.overpayment_amount = overpayment_amount
         self.compare = compare
-
 
     def _fixed_overpayment_calculation(self) -> list[dict[str, Union[float, Decimal]]]:
         """
@@ -273,7 +296,9 @@ class OverpaymentCalculator(MortgageCalculator):
                 break
         return overpayment_schedule
 
-    def _variable_overpayment_calculation(self) -> list[dict[str, Union[float, Decimal]]]:
+    def _variable_overpayment_calculation(
+        self,
+    ) -> list[dict[str, Union[float, Decimal]]]:
         """
         Calculate the variable overpayment schedule for the loan amount
         based on the variable interest rate, tenure and overpayment amount.
@@ -323,7 +348,7 @@ class OverpaymentCalculator(MortgageCalculator):
                 payment = round(
                     min(
                         loan_balance + fixed_interest_payment,
-                        fixed_payment + self.overpayment_amount
+                        fixed_payment + self.overpayment_amount,
                     ),
                     2,
                 )
@@ -340,7 +365,7 @@ class OverpaymentCalculator(MortgageCalculator):
                 payment = round(
                     min(
                         loan_balance + variable_interest_payment,
-                        variable_payment + self.overpayment_amount
+                        variable_payment + self.overpayment_amount,
                     ),
                     2,
                 )
@@ -383,7 +408,7 @@ class OverpaymentCalculator(MortgageCalculator):
         """
         Calculate the overpayment schedule for the loan amount
         based on the fixed or variable interest rate, tenure and overpayment amount.
-    
+
         Returns:
             - overpayment_df (pd.DataFrame): DataFrame containing the overpayment schedule.
                 - 'Month' (int): Month number
@@ -413,28 +438,26 @@ class OverpaymentCalculator(MortgageCalculator):
             summary = _mortgage_summary(self, overpayment_df)
             print("\n".join(summary))
             return overpayment_df
-        
+
         amortization_df = self.amortisation_schedule()
         overpayment_df = pd.merge(
-                amortization_df,
-                overpayment_df,
-                on="Month",
-                how="left",
-                suffixes=(" standard", " overpayment"),
-            )
+            amortization_df,
+            overpayment_df,
+            on="Month",
+            how="left",
+            suffixes=(" standard", " overpayment"),
+        )
         overpayment_df["Paid to date overpayment"] = _clean_and_convert_column(
-                overpayment_df, "Paid to date overpayment"
-            )
-        overpayment_df["Interest charged to date standard"] = (
-                _clean_and_convert_column(
-                    overpayment_df, "Interest charged to date standard"
-                )
-            )
-        overpayment_df["Interest charged to date overpayment"] = (
-                _clean_and_convert_column(
-                    overpayment_df, "Interest charged to date overpayment"
-                )
-            )
+            overpayment_df, "Paid to date overpayment"
+        )
+        overpayment_df["Interest charged to date standard"] = _clean_and_convert_column(
+            overpayment_df, "Interest charged to date standard"
+        )
+        overpayment_df[
+            "Interest charged to date overpayment"
+        ] = _clean_and_convert_column(
+            overpayment_df, "Interest charged to date overpayment"
+        )
 
         print(f'{"="*30}')
         summary = _mortgage_summary(self, overpayment_df, compare=True)
