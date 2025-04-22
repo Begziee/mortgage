@@ -20,9 +20,9 @@ class MortgageCalculator:
     """
     A class to calculate mortgage schedules for fixed and variable rate loans.
 
-    This class provides functionality to compute monthly mortgage payments, 
-    total interest paid, and remaining balances for both fixed and variable 
-    rate loans. It takes into account the loan amount, interest rates, and 
+    This class provides functionality to compute monthly mortgage payments,
+    total interest paid, and remaining balances for both fixed and variable
+    rate loans. It takes into account the loan amount, interest rates, and
     tenure to help users understand their mortgage obligations.
     """
 

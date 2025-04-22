@@ -1,6 +1,10 @@
 """
-This module contains helper functions for mortgage calculations, including
-data cleaning and generating loan summaries ***********.
+helpers.py
+Helper functions for the mortgage application.
+This module contains utility functions for calculating
+mortgage payments, cleaning data, and generating summaries.
+It includes functions for fixed and variable rate payments,
+cleaning DataFrame columns, and generating mortgage summaries.
 """
 
 from typing import Union
@@ -139,13 +143,15 @@ def _mortgage_summary(
         # Add comparison details
         overpayment_ratio = round(
             data_frame["Paid to date overpayment"].dropna().iloc[-1] / self.loan_amount,
-            2
+            2,
         )
         total_years = data_frame["Payment overpayment"].count() // 12
         total_months = data_frame["Payment overpayment"].count() % 12
         # Calculate interest savings
         standard_interest = data_frame["Interest charged to date standard"].iloc[-1]
-        overpyament_interest = data_frame["Interest charged to date overpayment"].dropna().iloc[-1]
+        overpyament_interest = (
+            data_frame["Interest charged to date overpayment"].dropna().iloc[-1]
+        )
         interest_savings = round(standard_interest - overpyament_interest, 2)
 
         # Append comparison details to output
