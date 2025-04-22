@@ -3,10 +3,11 @@ This module contains helper functions for mortgage calculations, including
 data cleaning and generating loan summaries ***********.
 """
 
-import pandas as pd
 from typing import Union
 from decimal import Decimal
 from functools import lru_cache
+
+import pandas as pd
 
 
 @lru_cache()
@@ -26,20 +27,19 @@ def _fixed_rate_payment(self) -> list[dict[str, Union[float, Decimal]]]:
     """
     fixed_rate_payment = []
     monthly_rate = self.fixed_rate / (12 * 100)
-    compounding_factor = (1 + monthly_rate)**self.total_month
-    payment = (self.loan_amount * monthly_rate * compounding_factor /
-            (compounding_factor - 1))
+    compounding_factor = (1 + monthly_rate) ** self.total_month
+    payment = (
+        self.loan_amount * monthly_rate * compounding_factor / (compounding_factor - 1)
+    )
 
-    fixed_rate_payment.append({
-        "monthly_rate": monthly_rate,
-        "payment": payment
-    })
+    fixed_rate_payment.append({"monthly_rate": monthly_rate, "payment": payment})
     return fixed_rate_payment
+
 
 @lru_cache()
 def _variable_rate_payment(
-        self,
-        current_balance: float) -> list[dict[str, Union[float, Decimal]]]:
+    self, current_balance: float
+) -> list[dict[str, Union[float, Decimal]]]:
     """
     Calculate the variable monthly rate and payment amount for the loan amount
     based on the variable interest rate and tenure.
@@ -57,15 +57,14 @@ def _variable_rate_payment(
     variable_rate_payment = []
     monthly_rate = self.variable_rate / (12 * 100)
     total_month = (self.tenure - self.fixed_tenure) * 12
-    compounding_factor = (1 + monthly_rate)**total_month
-    payment = (current_balance * monthly_rate * compounding_factor /
-            (compounding_factor - 1))
+    compounding_factor = (1 + monthly_rate) ** total_month
+    payment = (
+        current_balance * monthly_rate * compounding_factor / (compounding_factor - 1)
+    )
 
-    variable_rate_payment.append({
-        "monthly_rate": monthly_rate,
-        "payment": payment
-    })
+    variable_rate_payment.append({"monthly_rate": monthly_rate, "payment": payment})
     return variable_rate_payment
+
 
 def _clean_and_convert_column(data_frame: pd.DataFrame, column_name: str) -> pd.Series:
     """
@@ -82,11 +81,15 @@ def _clean_and_convert_column(data_frame: pd.DataFrame, column_name: str) -> pd.
     if (
         not data_frame[column_name].dtype == "object"
     ):  # Check if the column is not already strings
-        data_frame[column_name] = data_frame[column_name].astype(str)  # Convert to strings
+        data_frame[column_name] = data_frame[column_name].astype(
+            str
+        )  # Convert to strings
     return data_frame[column_name].str.replace(",", "").astype(float)
 
 
-def _mortgage_summary(self, data_frame: pd.DataFrame, compare: bool = False) -> list[str]:
+def _mortgage_summary(
+    self, data_frame: pd.DataFrame, compare: bool = False
+) -> list[str]:
     """
     Generator to dynamically create a loan summary.
     Includes overpayment details if applicable and comparison calculations if `compare` is True.
@@ -102,7 +105,7 @@ def _mortgage_summary(self, data_frame: pd.DataFrame, compare: bool = False) -> 
     """
     # Base loan info
     output = [
-         " Loan Summary",
+        " Loan Summary",
         f"{'-'*30}",
         f"• Amount: £{self.loan_amount:,.2f}",
         f"• Term: {self.tenure} years ({self.total_month} months)",
@@ -135,15 +138,17 @@ def _mortgage_summary(self, data_frame: pd.DataFrame, compare: bool = False) -> 
 
         # Add comparison details
         overpayment_ratio = round(
-            data_frame["Paid to date overpayment"].dropna().iloc[-1] / self.loan_amount, 2
+            data_frame["Paid to date overpayment"].dropna().iloc[-1] / self.loan_amount,
+            2
         )
         total_years = data_frame["Payment overpayment"].count() // 12
         total_months = data_frame["Payment overpayment"].count() % 12
-        interest_savings = round(
-            data_frame["Interest charged to date standard"].iloc[-1]
-            - data_frame["Interest charged to date overpayment"].dropna().iloc[-1],
-            2,
-        )
+        # Calculate interest savings
+        standard_interest = data_frame["Interest charged to date standard"].iloc[-1]
+        overpyament_interest = data_frame["Interest charged to date overpayment"].dropna().iloc[-1]
+        interest_savings = round(standard_interest - overpyament_interest, 2)
+
+        # Append comparison details to output
         output.append(
             f" Comparison Summary:"
             f"\n   - Overpayment Repayment Ratio: £{overpayment_ratio} per £1 borrowed"
@@ -152,9 +157,8 @@ def _mortgage_summary(self, data_frame: pd.DataFrame, compare: bool = False) -> 
         )
     else:
         # Use paid_ratio if compare is False
-        paid_ratio = round(data_frame["Paid to date"].dropna().iloc[-1] / self.loan_amount, 2)
+        paid_ratio = round(
+            data_frame["Paid to date"].dropna().iloc[-1] / self.loan_amount, 2
+        )
         output.append(f"• Repayment Ratio: £{paid_ratio} for every £1 borrowed")
     return output
-
-
-
