@@ -1,0 +1,27 @@
+repos:
+ - repo: local
+   hooks:
+   - id: check-branch
+     name: Check Branch
+     entry: bash -c 'if [ "$(git rev-parse --abbrev-ref HEAD)" != "dev" ]; then exit 0; fi' # Hook to conditionally run pre-commit hooks only on the dev branch
+     language: system
+     types: [python]
+
+   - id: black
+     name: Run Black
+     entry: black
+     language: system # Ensures it uses the installed version in your environment
+     types: [python]
+
+   - id: pylint
+     name: Run Pylint
+     entry: pylint
+     language: system # Ensures it uses the installed version in your environment
+     types: [python]
+     args: [
+      --disable=missing-module-docstring,
+      --disable=too-many-arguments,
+      --disable=too-many-locals,
+      --disable=too-few-public-methods,
+      --disable=line-too-long
+      ]
