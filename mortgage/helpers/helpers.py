@@ -10,6 +10,7 @@ cleaning DataFrame columns, and generating mortgage summaries.
 from typing import Union
 from decimal import Decimal
 from functools import lru_cache
+import re
 
 import pandas as pd
 
@@ -96,7 +97,8 @@ def _mortgage_summary(
 ) -> list[str]:
     """
     Generator to dynamically create a loan summary.
-    Includes overpayment details if applicable and comparison calculations if `compare` is True.
+    Includes overpayment details if applicable and
+    comparison calculations if `compare` is True.
 
     Args:
         self: The instance of the class (MortgageCalculator or OverpaymentCalculator).
@@ -157,9 +159,9 @@ def _mortgage_summary(
         # Append comparison details to output
         output.append(
             f" Comparison Summary:"
-            f"\n   - Overpayment Repayment Ratio: £{overpayment_ratio} per £1 borrowed"
-            f"\n   - Mortgage Term with Overpayment: {total_years} year(s) and {total_months} month(s)"
-            f"\n   - Interest Savings: £{interest_savings:,.2f}"
+            f"\n - Overpayment Repayment Ratio: £{overpayment_ratio} per £1 borrowed"
+            f"\n - Mortgage Term with Overpayment: {total_years} year(s) and {total_months} month(s)"
+            f"\n - Interest Savings: £{interest_savings:,.2f}"
         )
     else:
         # Use paid_ratio if compare is False
@@ -168,3 +170,100 @@ def _mortgage_summary(
         )
         output.append(f"• Repayment Ratio: £{paid_ratio} for every £1 borrowed")
     return output
+
+
+def _clean_currency(value):
+    """Remove currency symbols and thousands separators, return float
+    Args:
+        value (str or float): The value to clean, can be a
+                string with currency symbols or a float.
+    Returns:
+        float: The cleaned value as a float.
+    """
+    if isinstance(value, str):
+        return float(re.sub(r"[^\d.]", "", value))
+    return float(value)
+
+
+def _append_payment_balance_schedule(
+    schedule,
+    date,
+    opening_balance,
+    days_since_last_payment,
+    amount,
+    rate,
+    interest_accrued,
+    principal_repaid,
+    closing_balance,
+):
+    """
+    Append a payment balance schedule entry.
+    Args:
+        schedule (list): The list to append the entry to.
+        date (str): The date of the payment.
+        opening_balance (float): The opening balance before the payment.
+        days_since_last_payment (int): Number of days since the last payment.
+        amount (float): The total payment amount.
+        rate (float): The interest rate for the period.
+        interest_accrued (float): Interest accrued during the period.
+        principal_repaid (float): Principal repaid during the period.
+        closing_balance (float): The closing balance after the payment.
+    """
+    schedule.append(
+        {
+            "Date": date,
+            "Total Loan Balance B/F": f"£{opening_balance:,.2f}",
+            "Number of days since last payment": days_since_last_payment,
+            "Rate": rate,
+            "Transaction": f"£{amount:,.2f}",
+            "Mortgage Interest": f"£{interest_accrued:,.2f}",
+            "Principal repaid": f"£{principal_repaid:,.2f}",
+            "Total Loan Balance C/F": f"£{closing_balance:,.2f}",
+        }
+    )
+
+
+def _append_schedule(
+    payment_schedule,
+    month,
+    fixed_rate,
+    payment,
+    interest_payment,
+    principal_payment,
+    total_payment,
+    total_interest_payment,
+    total_principal_payment,
+    loan_balance,
+    equity,
+):
+    """
+    Append a payment schedule entry with detailed information.
+    Args:
+        payment_schedule (list): The list to append the entry to.
+        month (int): The month number in the payment schedule.
+        fixed_rate (float): The fixed interest rate for the period.
+        payment (float): The total payment amount for the period.
+        interest_payment (float): Interest charged for the period.
+        principal_payment (float): Principal repaid during the period.
+        total_payment (float): Total payment made to date.
+        total_interest_payment (float): Total interest charged to date.
+        total_principal_payment (float): Total principal repaid to date.
+        loan_balance (float): Remaining loan balance after the payment.
+        equity (float): Equity percentage in the property.
+    """
+
+    payment_schedule.append(
+        {
+            "Month": month,
+            "Rate": fixed_rate,
+            "Rate type": "Fixed",
+            "Payment": f"{payment:,.2f}",
+            "Interest charged": f"{interest_payment:,.2f}",
+            "Principal repaid ": f"{principal_payment:,.2f}",
+            "Paid to date": f"{total_payment:,.2f}",
+            "Interest charged to date": f"{total_interest_payment:,.2f}",
+            "Principal repaid to date": f"{total_principal_payment:,.2f}",
+            "Loan balance": f"{max(loan_balance, 0):,.2f}",
+            "Equity": f"{equity:.2%}",
+        }
+    )

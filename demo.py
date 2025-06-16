@@ -14,11 +14,10 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 # Your existing code
 mortgage = OverpaymentCalculator(
-    loan_amount=250000,
-    fixed_rate=5.25,
-    tenure=20,
-    fixed_tenure=5,
-    variable_rate=6.26,
+    loan_amount=330000,
+    fixed_rate=4.5,
+    tenure=30,
+    fixed_tenure=30,
     overpayment_amount=200,
     compare=True,
 )
