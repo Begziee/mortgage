@@ -227,6 +227,7 @@ def _append_schedule(
     payment_schedule,
     month,
     fixed_rate,
+    rate_type,
     payment,
     interest_payment,
     principal_payment,
@@ -256,7 +257,7 @@ def _append_schedule(
         {
             "Month": month,
             "Rate": fixed_rate,
-            "Rate type": "Fixed",
+            "Rate type": rate_type,
             "Payment": f"{payment:,.2f}",
             "Interest charged": f"{interest_payment:,.2f}",
             "Principal repaid ": f"{principal_payment:,.2f}",
