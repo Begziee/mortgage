@@ -268,3 +268,20 @@ def _append_schedule(
             "Equity": f"{equity:.2%}",
         }
     )
+
+
+def _highlight_value(val):
+    """Highlight values: red for negative, black for zero, green for positive.
+    Args:
+        val (str): The value to check, expected to be a string with currency symbol.
+    Returns:
+        str: A string with CSS style to color the text.
+    """
+    num = float(val.replace("£", "").replace(",", ""))
+    if num < 0:
+        color = "red"
+    elif num == 0:
+        color = "black"
+    else:
+        color = "green"
+    return f"color: {color}"

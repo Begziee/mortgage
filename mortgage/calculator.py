@@ -495,10 +495,11 @@ class MortgageBalance(MortgageCalculator):
         self.daily_balance = daily_balance
         self.today_payment = today_payment
 
-    # @output_csv
-    def _daily_balance(self):
+    @output_csv
+    def _daily_balance(self) -> pd.DataFrame:
         """
-        Calculate the mortgage balance based on the payment schedule.
+        This method reads the payment schedule from a CSV file and calculates
+        the mortgage balance on a daily basis based on the payment dates and amounts.
         Uses instance attributes:
             - loan_amount (float): Amount borrowed (float)
             - fixed_rate (float): Fixed interest rate (float)
@@ -515,8 +516,10 @@ class MortgageBalance(MortgageCalculator):
                 - 'Principal repaid' (str): Principal repaid in the payment
                 - 'Total Loan Balance C/F' (str): Closing balance after payment
         """
-
+        # Initialise variables
         current_balance = self.loan_amount
+        accumulated_interest = 0
+        outstanding_principal_repayment = 0
         today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
 
         if self.end_date is None:
@@ -550,11 +553,23 @@ class MortgageBalance(MortgageCalculator):
 
         # Calculate daily schedule
         for date in date_range:
+            daily_interest = current_balance * self.daily_rate
+            accumulated_interest += daily_interest
             if date == today:
                 payment = self.today_payment
             else:
                 payment = payments.loc[payments["payment_date"] == date, "amount"].sum()
-            daily_interest = current_balance * self.daily_rate
+
+            if payment == 0:
+                principal_repaid = 0
+            else:
+                principal_repaid = (
+                    payment - accumulated_interest + outstanding_principal_repayment
+                )
+                if principal_repaid < 0:
+                    outstanding_principal_repayment = principal_repaid
+                accumulated_interest = 0  # Reset after payment
+
             closing_balance = current_balance + daily_interest - payment
             schedule.loc[date] = {
                 "Date": date,
@@ -562,7 +577,7 @@ class MortgageBalance(MortgageCalculator):
                 "Rate": self.fixed_rate,
                 "Transaction": f"£{payment:,.2f}",
                 "Mortgage Interest": f"£{daily_interest:,.2f}",
-                "Principal repaid": f"£{payment - daily_interest:,.2f}",
+                "Principal repaid": f"£{principal_repaid:,.2f}",
                 "Total Loan Balance C/F": f"£{closing_balance:,.2f}",
             }
             # Update current balance for the next iteration
@@ -590,9 +605,10 @@ class MortgageBalance(MortgageCalculator):
                 "Total Loan Balance C/F",
             ]
         ]
+
         return pd.DataFrame(final_schedule)
 
-    def _payment_day_balance(self):
+    def _payment_day_balance(self) -> pd.DataFrame:
         """
         This method reads the payment schedule from a CSV file and calculates
         the mortgage balance based on the payment dates and amounts.
@@ -632,7 +648,6 @@ class MortgageBalance(MortgageCalculator):
             days_since_last_payment = (payment_date - last_payment_date).days
 
             # Calculate interest accrued and principal repaid
-            # interest_accrued = current_balance * self.daily_rate * days_since_last_payment
             interest_accrued = opening_balance * (
                 (1 + self.daily_rate) ** days_since_last_payment - 1
             )
@@ -680,7 +695,7 @@ class MortgageBalance(MortgageCalculator):
         # Convert the schedule to a DataFrame
         return pd.DataFrame(schedule)
 
-    def calculate_balance(self):
+    def calculate_balance(self) -> None:
         """
         Calculate the mortgage balance based on the payment schedule and conditions set.
 

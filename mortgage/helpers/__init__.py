@@ -21,4 +21,5 @@ from .helpers import (
     _clean_currency,
     _append_payment_balance_schedule,
     _append_schedule,
+    _highlight_value,
 )
