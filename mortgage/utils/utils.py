@@ -11,6 +11,13 @@ from datetime import datetime
 def output_csv(func):
     """
     Decorator to save the output of a function to a CSV file.
+    This decorator creates an 'output_files' directory if it doesn't exist,
+    and saves the DataFrame returned by the function to a CSV file with a
+    timestamped filename.
+    Args:
+        func (callable): The function to be decorated, which should return a pandas DataFrame.
+    Returns:
+        callable: The wrapped function that saves its output to a CSV file.
     """
 
     @wraps(func)

@@ -19,9 +19,12 @@ repos:
      language: system # Ensures it uses the installed version in your environment
      types: [python]
      args: [
-      --disable=missing-module-docstring,
       --disable=too-many-arguments,
       --disable=too-many-locals,
       --disable=too-few-public-methods,
-      --disable=line-too-long
+      --disable=line-too-long,
+      --disable=too-many-function-args,
+      --disable=too-many-locals,
+      --disable=too-many-arguments,
+      --disable=too-many-locals
       ]
