@@ -210,6 +210,7 @@ def _append_payment_balance_schedule(
     interest_accrued,
     principal_repaid,
     closing_balance,
+    equity,
 ):
     """
     Append a payment balance schedule entry.
@@ -223,6 +224,7 @@ def _append_payment_balance_schedule(
         interest_accrued (float): Interest accrued during the period.
         principal_repaid (float): Principal repaid during the period.
         closing_balance (float): The closing balance after the payment.
+        equity (float): Equity percentage in the property.
     """
     schedule.append(
         {
@@ -234,6 +236,7 @@ def _append_payment_balance_schedule(
             "Mortgage Interest": f"£{interest_accrued:,.2f}",
             "Principal repaid": f"£{principal_repaid:,.2f}",
             "Total Loan Balance C/F": f"£{closing_balance:,.2f}",
+            "Equity": f"{equity:.2%}",
         }
     )
 
