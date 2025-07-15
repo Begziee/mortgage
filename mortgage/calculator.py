@@ -425,7 +425,6 @@ class OverpaymentCalculator(MortgageCalculator):
                 - 'Loan balance' (float): Remaining loan balance
                 - 'Equity' (float): Equity percentage
         """
-        #  self.overpayment_amount = overpayment_amount
         if self.variable_rate == 0:
             overpayment_schedule = self._fixed_overpayment_calculation()
         else:
@@ -495,7 +494,6 @@ class MortgageBalance(MortgageCalculator):
         self.daily_balance = daily_balance
         self.today_payment = today_payment
 
-    @output_csv
     def _daily_balance(self) -> pd.DataFrame:
         """
         This method reads the payment schedule from a CSV file and calculates
@@ -695,6 +693,7 @@ class MortgageBalance(MortgageCalculator):
         # Convert the schedule to a DataFrame
         return pd.DataFrame(schedule)
 
+    @output_csv
     def calculate_balance(self) -> None:
         """
         Calculate the mortgage balance based on the payment schedule and conditions set.
@@ -708,4 +707,4 @@ class MortgageBalance(MortgageCalculator):
             schedule_df = self._daily_balance()
         else:
             schedule_df = self._payment_day_balance()
-        print(schedule_df)
+        return schedule_df
