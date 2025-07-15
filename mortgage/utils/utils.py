@@ -6,14 +6,14 @@ Utility functions for the mortgage application.
 import os
 from functools import wraps
 from datetime import datetime
-from mortgage.helpers import _mortgage_summary
+from mortgage.helpers import _mortgage_summary, _highlight_value
 
 
-def output_csv(func):
+def export_file(func):
     """
-    Decorator to save the output of a function to a CSV file.
+    Decorator to save the output of a function to a CSV and HTML file.
     This decorator creates an 'output_files' directory if it doesn't exist,
-    and saves the DataFrame returned by the function to a CSV file with a
+    and saves the DataFrame returned by the function to a CSV and HTML file with a
     timestamped filename.
     Args:
         func (callable): The function to be decorated, which should return a pandas DataFrame.
@@ -44,8 +44,26 @@ def output_csv(func):
             data_frame.to_csv(
                 file, index=False
             )  # Write DataFrame to the same file object
-
         print(f"Saved CSV to: {filepath}")
+        # Create HTML summary
+        summary_html = "<br>".join(summary_lines) + "<br><br>"
+        html_filepath = filepath.replace(".csv", ".html")
+
+        with open(html_filepath, "w", encoding="utf-8") as html_file:
+            html_file.write(summary_html)
+            if "Principal repaid" in data_frame.columns:
+                styled = data_frame.style.applymap(
+                    _highlight_value, subset=["Principal repaid"]
+                )
+
+                # Save styled DataFrame to HTML
+                html_file.write(styled.to_html())
+            else:
+                html_file.write(data_frame.to_html())
+            # Print confirmation message
+            print(f"Saved DataFrame to: {filepath}")
+
+        print(f"Saved HTML to: {html_filepath}")
         return data_frame
 
     return wrapper

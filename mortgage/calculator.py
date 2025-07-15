@@ -8,7 +8,7 @@ from typing import Union
 from decimal import Decimal
 from datetime import datetime
 import pandas as pd
-from mortgage.utils import output_csv
+from mortgage.utils import export_file
 from mortgage.helpers import (
     _mortgage_summary,
     _clean_and_convert_column,
@@ -172,7 +172,7 @@ class MortgageCalculator:
             month = month + 1
         return payment_schedule
 
-    @output_csv
+    @export_file
     def amortisation_schedule(self) -> pd.DataFrame:
         """
         Calculate the amortisation schedule for the loan amount
@@ -405,7 +405,7 @@ class OverpaymentCalculator(MortgageCalculator):
                 break
         return overpayment_schedule
 
-    @output_csv
+    @export_file
     def overpayment_schedule(self) -> pd.DataFrame:
         """
         Calculate the overpayment schedule for the loan amount
@@ -693,7 +693,7 @@ class MortgageBalance(MortgageCalculator):
         # Convert the schedule to a DataFrame
         return pd.DataFrame(schedule)
 
-    @output_csv
+    @export_file
     def calculate_balance(self) -> None:
         """
         Calculate the mortgage balance based on the payment schedule and conditions set.

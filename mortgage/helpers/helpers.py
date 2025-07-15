@@ -194,7 +194,9 @@ def _clean_currency(value):
         float: The cleaned value as a float.
     """
     if isinstance(value, str):
-        return float(re.sub(r"[^\d.]", "", value))
+        # Keep digits, dot, and minus sign
+        cleaned = re.sub(r"[^\d\.\-]", "", value)
+        return float(cleaned) if cleaned else 0.0
     return float(value)
 
 
@@ -290,7 +292,12 @@ def _highlight_value(val):
     Returns:
         str: A string with CSS style to color the text.
     """
-    num = float(val.replace("£", "").replace(",", ""))
+    try:
+        # Remove currency symbol and commas, convert to float
+        num = _clean_currency(val)
+    except (ValueError, TypeError):
+        # If conversion fails, return default color
+        return "color: black"
     if num < 0:
         color = "red"
     elif num == 0:
