@@ -135,7 +135,17 @@ def _mortgage_summary(
         output.append(f"• Monthly Overpayment: £{overpayment_amount:,.2f}")
 
     # Handle "Repayment Ratio" based on the context
-    if compare:
+
+    required_cols = [
+        "Paid to date standard",
+        "Paid to date overpayment",
+        "Interest charged to date standard",
+        "Interest charged to date overpayment",
+        "Payment overpayment",
+    ]
+    has_required_cols = all(col in data_frame.columns for col in required_cols)
+
+    if compare and has_required_cols:
         # Use standard_ratio if compare is True
         standard_ratio = round(
             data_frame["Paid to date standard"].dropna().iloc[-1] / self.loan_amount, 2
@@ -164,11 +174,14 @@ def _mortgage_summary(
             f"\n - Interest Savings: £{interest_savings:,.2f}"
         )
     else:
-        # Use paid_ratio if compare is False
-        paid_ratio = round(
-            data_frame["Paid to date"].dropna().iloc[-1] / self.loan_amount, 2
-        )
-        output.append(f"• Repayment Ratio: £{paid_ratio} for every £1 borrowed")
+        # Use paid_ratio if compare is False or columns are missing
+        if "Paid to date" in data_frame.columns:
+            paid_ratio = round(
+                data_frame["Paid to date"].dropna().iloc[-1] / self.loan_amount, 2
+            )
+            output.append(f"• Repayment Ratio: £{paid_ratio} for every £1 borrowed")
+        else:
+            output.append("• Repayment Ratio: N/A (column missing)")
     return output
 
 
