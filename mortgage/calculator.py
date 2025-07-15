@@ -693,6 +693,7 @@ class MortgageBalance(MortgageCalculator):
         # Convert the schedule to a DataFrame
         return pd.DataFrame(schedule)
 
+    @output_csv
     def calculate_balance(self) -> None:
         """
         Calculate the mortgage balance based on the payment schedule and conditions set.
@@ -706,4 +707,4 @@ class MortgageBalance(MortgageCalculator):
             schedule_df = self._daily_balance()
         else:
             schedule_df = self._payment_day_balance()
-        print(schedule_df)
+        return schedule_df
