@@ -513,6 +513,7 @@ class MortgageBalance(MortgageCalculator):
                 - 'Mortgage Interest' (str): Interest accrued for the period
                 - 'Principal repaid' (str): Principal repaid in the payment
                 - 'Total Loan Balance C/F' (str): Closing balance after payment
+                - 'Equity' (str): Equity percentage
         """
         # Initialise variables
         current_balance = self.loan_amount
@@ -538,6 +539,7 @@ class MortgageBalance(MortgageCalculator):
                 "Mortgage Interest",
                 "Principal repaid",
                 "Total Loan Balance C/F",
+                "Equity",
             ],
         )
 
@@ -577,6 +579,7 @@ class MortgageBalance(MortgageCalculator):
                 "Mortgage Interest": f"£{daily_interest:,.2f}",
                 "Principal repaid": f"£{principal_repaid:,.2f}",
                 "Total Loan Balance C/F": f"£{closing_balance:,.2f}",
+                "Equity": f"{(self.loan_amount - closing_balance) / self.loan_amount:.2%}",
             }
             # Update current balance for the next iteration
             current_balance = closing_balance
@@ -601,6 +604,7 @@ class MortgageBalance(MortgageCalculator):
                 "Mortgage Interest",
                 "Principal repaid",
                 "Total Loan Balance C/F",
+                "Equity",
             ]
         ]
 
@@ -626,6 +630,7 @@ class MortgageBalance(MortgageCalculator):
                 - 'Mortgage Interest' (str): Interest accrued for the period
                 - 'Principal repaid' (str): Principal repaid in the payment
                 - 'Total Loan Balance C/F' (str): Closing balance after payment
+                - 'Equity' (str): Equity percentage
         """
         # Initialise variables
         opening_balance = closing_balance = self.loan_amount
@@ -654,6 +659,8 @@ class MortgageBalance(MortgageCalculator):
             # Update current balance
             closing_balance -= principal_repaid
 
+            equity = (self.loan_amount - closing_balance) / self.loan_amount
+
             # Append to schedule
             _append_payment_balance_schedule(
                 schedule,
@@ -665,6 +672,7 @@ class MortgageBalance(MortgageCalculator):
                 interest_accrued,
                 principal_repaid,
                 closing_balance,
+                equity,
             )
             last_payment_date = payment_date
 
@@ -677,6 +685,7 @@ class MortgageBalance(MortgageCalculator):
         )
         principal_repaid = self.today_payment - interest_accrued
         closing_balance = opening_balance - principal_repaid
+        equity = (self.loan_amount - closing_balance) / self.loan_amount
 
         # Append to schedule
         _append_payment_balance_schedule(
@@ -689,6 +698,7 @@ class MortgageBalance(MortgageCalculator):
             interest_accrued,
             principal_repaid,
             closing_balance,
+            equity,
         )
         # Convert the schedule to a DataFrame
         return pd.DataFrame(schedule)
